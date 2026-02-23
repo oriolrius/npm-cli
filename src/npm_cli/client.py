@@ -83,7 +83,7 @@ class NPMClient:
         """Login and get token."""
         resp = self.post("/tokens", {"identity": identity, "secret": secret})
         self.token = resp["token"]
-        save_token(server_key, self.token)
+        save_token(server_key, self.token, self.base_url)
         return self.token
 
     def refresh_token(self) -> str:

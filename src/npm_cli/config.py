@@ -51,13 +51,27 @@ def load_tokens() -> dict[str, str]:
     return {}
 
 
-def save_token(server_key: str, token: str) -> None:
+def save_token(server_key: str, token: str, url: str | None = None) -> None:
     """Save token for a server."""
     tokens = load_tokens()
     tokens[server_key] = token
     TOKEN_CACHE_PATH.touch(mode=0o600)
     with open(TOKEN_CACHE_PATH, "w") as f:
         yaml.dump(tokens, f)
+
+    # Also save URL to config if provided
+    if url:
+        save_server_url(server_key, url)
+
+
+def save_server_url(server_key: str, url: str) -> None:
+    """Save server URL to config."""
+    config = load_config()
+    if server_key not in config.servers:
+        config.servers[server_key] = ServerConfig(url=url)
+    else:
+        config.servers[server_key].url = url
+    save_config(config)
 
 
 def clear_token(server_key: str) -> None:
