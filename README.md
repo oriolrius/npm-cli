@@ -15,13 +15,16 @@ Manage proxy hosts, SSL certificates, streams, users, and more - all from your t
 ## Installation
 
 ```bash
-# From PyPI (when published)
-pip install npm-cli
+# Using uv (recommended)
+uv pip install git+https://github.com/oriolrius/npm-cli.git
 
-# From source
+# From source with uv
 git clone https://github.com/oriolrius/npm-cli.git
 cd npm-cli
-pip install -e .
+uv sync
+
+# Using pip
+pip install git+https://github.com/oriolrius/npm-cli.git
 ```
 
 ## Quick Start
@@ -238,14 +241,17 @@ npm-cli -o json proxy list | jq -r '.[].id' | xargs -I {} npm-cli proxy disable 
 git clone https://github.com/oriolrius/npm-cli.git
 cd npm-cli
 
-# Install with dev dependencies
+# Install with uv (recommended)
+uv sync --all-extras
+
+# Or with pip
 pip install -e ".[dev]"
 
 # Run tests
 pytest
 
 # Format code
-black src/
+ruff format src/
 ruff check src/ --fix
 
 # Type check
