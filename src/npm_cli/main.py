@@ -73,7 +73,16 @@ def cli(ctx, url, user, password, token, server, output, quiet):
     )
 
     if final_url:
-        ctx.obj.client = NPMClient(final_url, final_token)
+        # Auto-login if user and password explicitly provided via CLI
+        if user and password:
+            ctx.obj.client = NPMClient(final_url)
+            try:
+                ctx.obj.client.login(user, password, server)
+            except Exception as e:
+                print_error(f"Auto-login failed: {e}")
+                raise SystemExit(1)
+        else:
+            ctx.obj.client = NPMClient(final_url, final_token)
 
 
 # ============================================================================
