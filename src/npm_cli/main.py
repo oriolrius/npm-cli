@@ -327,6 +327,11 @@ def proxy_update(
     # Get current data
     current = ctx.obj.client.get_proxy_host(host_id)
 
+    # Remove read-only fields that the API rejects on update
+    readonly_fields = ["id", "created_on", "modified_on", "owner_user_id", "meta", "enabled"]
+    for field in readonly_fields:
+        current.pop(field, None)
+
     # Update only provided fields
     if domain:
         current["domain_names"] = list(domain)
