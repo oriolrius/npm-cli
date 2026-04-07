@@ -12,6 +12,21 @@ Manage proxy hosts, SSL certificates, streams, users, and more - all from your t
 - **Secure Credential Storage** - Token caching with proper permissions
 - **Shell Completion** - Bash, Zsh, and Fish support
 
+## Quick Run (no install)
+
+Run directly without installing using [`uvx`](https://docs.astral.sh/uv/guides/tools/):
+
+```bash
+# Run from GitHub (always latest)
+uvx --from git+https://github.com/oriolrius/npm-cli npm-cli --help
+
+# One-liner: login and list proxies
+uvx --from git+https://github.com/oriolrius/npm-cli npm-cli auth login --url http://npm:81 --user admin@example.com
+uvx --from git+https://github.com/oriolrius/npm-cli npm-cli proxy list
+```
+
+> **Note:** `uvx` caches the package after the first run, so subsequent calls are instant. Use `uvx --reinstall --from ...` to force a refresh.
+
 ## Installation
 
 ```bash
