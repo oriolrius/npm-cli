@@ -1,3 +1,3 @@
 """NPM CLI - Full-featured CLI for Nginx Proxy Manager."""
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
