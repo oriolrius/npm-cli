@@ -280,9 +280,14 @@ class NPMClient:
         """List DNS providers."""
         return self.get("/nginx/certificates/dns-providers")
 
-    def test_http_challenge(self, domain: str) -> dict:
-        """Test HTTP challenge for domain."""
-        return self.post("/nginx/certificates/test-http", {"domain": domain})
+    def test_http_challenge(self, domains: list[str] | str) -> dict:
+        """Test HTTP reachability for one or more domains.
+
+        NPM v2.14 expects a JSON body of the form ``{"domains": [...]}``.
+        """
+        if isinstance(domains, str):
+            domains = [domains]
+        return self.post("/nginx/certificates/test-http", {"domains": list(domains)})
 
     def validate_certificate(self, data: dict) -> dict:
         """Validate certificate."""
