@@ -84,6 +84,10 @@ version_files = [
 tag_format = "v$version"
 update_changelog_on_bump = false
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
 [tool.mypy]
 python_version = "3.9"
 strict = true
