@@ -14,6 +14,7 @@ from .output import (
     print_info,
     print_success,
     print_table,
+    print_warning,
 )
 
 # Pass context to subcommands
@@ -659,27 +660,43 @@ def certs_get(ctx, cert_id):
 
 @certs.command("create")
 @click.option("--domain", "-d", required=True, multiple=True, help="Domain name(s)")
-@click.option("--email", "-e", required=True, help="Let's Encrypt email")
+@click.option(
+    "--email",
+    "-e",
+    help="Let's Encrypt email (DEPRECATED: v2.14 uses the authenticated user's email)",
+)
 @click.option("--dns-challenge/--http-challenge", default=False, help="Use DNS challenge")
-@click.option("--dns-provider", help="DNS provider name")
+@click.option("--dns-provider", help="DNS provider name (required with --dns-challenge)")
 @click.option("--dns-credentials", help="DNS provider credentials")
 @click.option("--propagation-seconds", type=int, default=30, help="DNS propagation wait")
 @click.pass_context
 def certs_create(ctx, domain, email, dns_challenge, dns_provider, dns_credentials, propagation_seconds):
-    """Create a new Let's Encrypt certificate."""
+    """Create a new Let's Encrypt certificate.
+
+    NPM v2.14 sources the Let's Encrypt email from the authenticated user's
+    profile, so ``--email`` is accepted for backwards compatibility but
+    ignored (a warning is shown).
+    """
+    if email:
+        print_warning(
+            "--email is ignored on NPM v2.14+: the LE email is taken from "
+            "the authenticated user's profile."
+        )
+
+    meta: dict = {"dns_challenge": dns_challenge}
+    if dns_challenge:
+        if not dns_provider:
+            print_error("--dns-provider is required when --dns-challenge is set")
+            raise SystemExit(1)
+        meta["dns_provider"] = dns_provider
+        meta["dns_provider_credentials"] = dns_credentials or ""
+        meta["propagation_seconds"] = propagation_seconds
+
     data = {
         "provider": "letsencrypt",
         "domain_names": list(domain),
-        "meta": {
-            "letsencrypt_email": email,
-            "letsencrypt_agree": True,
-            "dns_challenge": dns_challenge,
-        },
+        "meta": meta,
     }
-    if dns_challenge and dns_provider:
-        data["meta"]["dns_provider"] = dns_provider
-        data["meta"]["dns_provider_credentials"] = dns_credentials or ""
-        data["meta"]["propagation_seconds"] = propagation_seconds
 
     result = ctx.obj.client.create_certificate(data)
     print_success(f"Certificate created with ID: {result['id']}")
@@ -774,11 +791,11 @@ def certs_dns_providers(ctx):
 
 
 @certs.command("test-http")
-@click.option("--domain", "-d", required=True, help="Domain to test")
+@click.option("--domain", "-d", required=True, multiple=True, help="Domain to test (repeatable)")
 @click.pass_context
 def certs_test_http(ctx, domain):
-    """Test HTTP challenge for a domain."""
-    result = ctx.obj.client.test_http_challenge(domain)
+    """Test HTTP reachability for one or more domains."""
+    result = ctx.obj.client.test_http_challenge(list(domain))
     format_output(result, ctx.obj.output)
 
 
