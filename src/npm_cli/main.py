@@ -206,6 +206,74 @@ def users_delete(ctx, user_id):
     print_success(f"User {user_id} deleted")
 
 
+@users.command("password")
+@click.option(
+    "--user-id",
+    default="me",
+    show_default=True,
+    help="User ID (integer) or 'me' for the authenticated user.",
+)
+@click.option(
+    "--current",
+    help="Current password. Required when changing your own password; prompted if omitted.",
+)
+@click.option(
+    "--new",
+    "new_password",
+    help="New password. If omitted, prompted (or generated with --generate).",
+)
+@click.option(
+    "--generate",
+    is_flag=True,
+    help="Generate a strong random password and print it. Mutually exclusive with --new.",
+)
+@click.pass_context
+def users_password(ctx, user_id, current, new_password, generate):
+    """Change a user's password.
+
+    Examples:
+      npm-cli users password                       # change your own, prompted
+      npm-cli users password --generate            # generate + set + print
+      npm-cli users password --user-id 2 --new ... # admin sets another user's password
+    """
+    import secrets
+    import string
+
+    if generate and new_password:
+        raise click.UsageError("--generate and --new are mutually exclusive")
+
+    # Normalize user_id: 'me' stays a string, numeric becomes int.
+    uid_param: object = user_id
+    if user_id != "me":
+        try:
+            uid_param = int(user_id)
+        except ValueError as e:
+            raise click.UsageError("--user-id must be an integer or 'me'") from e
+
+    changing_self = uid_param == "me"
+
+    if generate:
+        alphabet = string.ascii_letters + string.digits
+        new_password = "".join(secrets.choice(alphabet) for _ in range(28))
+    if not new_password:
+        new_password = click.prompt("New password", hide_input=True, confirmation_prompt=True)
+
+    if len(new_password) < 8:
+        raise click.UsageError("Password must be at least 8 characters")
+
+    payload: dict = {"type": "password", "secret": new_password}
+    if changing_self:
+        if not current:
+            current = click.prompt("Current password", hide_input=True)
+        payload["current"] = current
+
+    ctx.obj.client.update_user_auth(uid_param, payload)
+    target = "your account" if changing_self else f"user {uid_param}"
+    print_success(f"Password updated for {target}")
+    if generate:
+        click.echo(f"Generated password: {new_password}")
+
+
 @users.command("permissions")
 @click.argument("user_id", type=int)
 @click.pass_context
@@ -403,7 +471,9 @@ def redirect_list(ctx):
     """List all redirection hosts."""
     data = ctx.obj.client.list_redirection_hosts()
     format_output(
-        data, ctx.obj.output, ["id", "domain_names", "forward_domain_name", "forward_http_code", "enabled"]
+        data,
+        ctx.obj.output,
+        ["id", "domain_names", "forward_domain_name", "forward_http_code", "enabled"],
     )
 
 
@@ -426,7 +496,9 @@ def redirect_get(ctx, host_id):
 @click.option("--cert-id", type=int, help="Certificate ID")
 @click.option("--block-exploits/--no-block-exploits", default=True)
 @click.pass_context
-def redirect_create(ctx, domain, forward_url, http_code, scheme, preserve_path, ssl, cert_id, block_exploits):
+def redirect_create(
+    ctx, domain, forward_url, http_code, scheme, preserve_path, ssl, cert_id, block_exploits
+):
     """Create a new redirection host."""
     data = {
         "domain_names": list(domain),
@@ -569,7 +641,9 @@ def streams_list(ctx):
     """List all streams."""
     data = ctx.obj.client.list_streams()
     format_output(
-        data, ctx.obj.output, ["id", "incoming_port", "forwarding_host", "forwarding_port", "enabled"]
+        data,
+        ctx.obj.output,
+        ["id", "incoming_port", "forwarding_host", "forwarding_port", "enabled"],
     )
 
 
@@ -646,7 +720,9 @@ def certs():
 def certs_list(ctx):
     """List all certificates."""
     data = ctx.obj.client.list_certificates()
-    format_output(data, ctx.obj.output, ["id", "nice_name", "domain_names", "provider", "expires_on"])
+    format_output(
+        data, ctx.obj.output, ["id", "nice_name", "domain_names", "provider", "expires_on"]
+    )
 
 
 @certs.command("get")
@@ -670,7 +746,9 @@ def certs_get(ctx, cert_id):
 @click.option("--dns-credentials", help="DNS provider credentials")
 @click.option("--propagation-seconds", type=int, default=30, help="DNS propagation wait")
 @click.pass_context
-def certs_create(ctx, domain, email, dns_challenge, dns_provider, dns_credentials, propagation_seconds):
+def certs_create(
+    ctx, domain, email, dns_challenge, dns_provider, dns_credentials, propagation_seconds
+):
     """Create a new Let's Encrypt certificate.
 
     NPM v2.14 sources the Let's Encrypt email from the authenticated user's

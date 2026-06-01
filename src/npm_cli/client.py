@@ -118,6 +118,10 @@ class NPMClient:
         """Delete user."""
         return self.delete(f"/users/{user_id}")
 
+    def update_user_auth(self, user_id, data: dict) -> dict:
+        """Update a user's authentication (password). user_id may be int or 'me'."""
+        return self.put(f"/users/{user_id}/auth", data)
+
     def get_user_permissions(self, user_id: int) -> dict:
         """Get user permissions."""
         return self.get(f"/users/{user_id}/permissions")
