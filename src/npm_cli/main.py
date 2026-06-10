@@ -378,6 +378,7 @@ def proxy_create(
 @click.option("--http2/--no-http2", default=None)
 @click.option("--block-exploits/--no-block-exploits", default=None)
 @click.option("--websocket/--no-websocket", default=None)
+@click.option("--advanced-config", default=None, help="Custom Nginx config (server scope)")
 @click.pass_context
 def proxy_update(
     ctx,
@@ -391,6 +392,7 @@ def proxy_update(
     http2,
     block_exploits,
     websocket,
+    advanced_config,
 ):
     """Update a proxy host."""
     # Get current data
@@ -420,6 +422,8 @@ def proxy_update(
         current["block_exploits"] = block_exploits
     if websocket is not None:
         current["allow_websocket_upgrade"] = websocket
+    if advanced_config is not None:
+        current["advanced_config"] = advanced_config
 
     result = ctx.obj.client.update_proxy_host(host_id, current)
     print_success(f"Proxy host {host_id} updated")
